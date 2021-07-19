@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    net-ping (2.0.8)
+
+PLATFORMS
+  arm64-darwin-20
+
+DEPENDENCIES
+  net-ping
+
+BUNDLED WITH
+   2.2.15
