@@ -18,6 +18,8 @@ write a custom TCP/IP implementation and an HTTP client on top of it to get a
 more definitive answer, but this was frankly more work than I was wiling to put
 in.
 
+![](http://sirupsen.com/napkin/problem-15/initcwnd-script.png)
+
 ## How does it work?
 
 The idea is to send an HTTP 1.1 request with `curl` (used over the
