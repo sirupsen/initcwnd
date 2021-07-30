@@ -7,6 +7,9 @@ has to be run as root, as it uses `tcpdump(1)` to monitor the connection.
 [np]: https://sirupsen.com/napkin/problem-15/
 
 ```
+# You may need to install libpcap development packages for packetfu to work,
+# depending on your operating system.
+
 sudo gem install packetfu net-ping
 sudo ruby initcwnd.rb https://github.com/sirupsen/initcwnd
 ```
@@ -19,12 +22,6 @@ Because it uses hacky heuristics it's  _not_ a definitive answer. Ideally, we'd
 write a custom TCP/IP implementation and an HTTP client on top of it to get a
 more definitive answer, but this was frankly more work than I was wiling to put
 in.
-
-**Note:** Presently, this script only works on MacOS. It uses the newer pcap
-format, `pcap-ng`, to extract some additional data. It seems that `tcpdump` on
-Linux doesn't [support _writing_ `pcap-ng`, only reading][pcap]. It's quite
-possible it could be made to to work with the old `pcap` format and not require
-this. The main obstacle is to extract the accurate timestamps for the packets.
 
 [pcap]: https://seclists.org/tcpdump/2014/q3/4
 

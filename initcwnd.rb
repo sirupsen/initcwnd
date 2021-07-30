@@ -41,7 +41,7 @@ puts "stddev: #{stddev * 1000}ms"
 File.delete("initcwnd.pcap") if File.exist?("initcwnd.pcap")
 
 pid = fork do
-  exec("tcpdump", "-P", "-i", "en0", "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
+  exec("tcpdump", "-i", "en0", "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
 end
 
 sleep(2) # TCPdump needs a moment to start
@@ -50,7 +50,7 @@ sleep(2) # TCPdump needs a moment to start
 # The reason I didn't is because curl supports SSLKEYLOGFILE which is very
 # convenient for Wireshark.
 # TODO: We do not send --compressed
-site_html = `SSLKEYLOGFILE=key.log curl --compressed -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
+site_html = `SSLKEYLOGFILE=key.log curl -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
 unless $?.success?
   puts "CURL failed. Maybe the URL is a redirect?"
   exit 1
@@ -62,7 +62,6 @@ Process.kill("SIGQUIT", pid)
 Process.wait(pid)
 
 include PacketFu
-puts "ok on to reading.."
 
 first_ts = nil
 previous_ts = 0
@@ -92,9 +91,11 @@ window_ranges = {}
 
 open_new_window = true
 
-packets = PcapNG::File.new.readfile("initcwnd.pcap") do |block|
-  packet = Packet.parse(block.data)
-  timestamp = block.timestamp
+raw_packets = PacketFu::PcapFile.new.file_to_array(filename: "initcwnd.pcap", keep_timestamps: true)
+packets = raw_packets.each do |packet_hash|
+  packet = Packet.parse(packet_hash.values.first)
+  timestamp = Timestamp.new.read(packet_hash.keys.first.dup)
+  timestamp = "#{timestamp.sec.value}.#{timestamp.usec.value}".to_f
   first_ts = previous_ts = timestamp unless first_ts
 
   who_sym = packet.tcp_dst == 443 ? :client : :server
@@ -165,7 +166,7 @@ packets = PcapNG::File.new.readfile("initcwnd.pcap") do |block|
 
     if current_window && current_window.cover?(timestamp)
       windows[window_idx] ||= []
-      windows[window_idx] << block
+      windows[window_idx] << [timestamp, packet]
       puts "WINDOW #{windows.size}"
     else
       first_data ||= timestamp
@@ -173,7 +174,7 @@ packets = PcapNG::File.new.readfile("initcwnd.pcap") do |block|
 
       # First or new window
       current_window = (timestamp...(timestamp + median - stddev))
-      windows[window_idx + 1] = [block]
+      windows[window_idx + 1] = [[timestamp, packet]]
       window_ranges[window_idx + 1] = current_window
 
       puts "WINDOW #{windows.size}"
@@ -217,15 +218,14 @@ end
 puts "TCP CONGESTION WINDOW ANALYSIS FOR #{ARGV[0]}"
 # TODO: If whole response was contained in one window, we can't really tell you
 # what the initcwnd is.
-data_time = data_done_ts - windows[1].first.timestamp
+data_time = data_done_ts - windows[1].first.first
 puts "RTT p50:    #{to_ms(median, 1)}"
 puts "RTT avg:    #{to_ms(avg, 1)}"
 puts "RTT var:    #{to_ms(var,1 )}"
 puts "RTT stddev: #{to_ms(stddev, 1)}\n\n"
 
-total_packet_size = windows.sum do |(window_idx, blocks)|
-  packets = blocks.map { |block| Packet.parse(block.data) }
-  packets.sum { |p| p.payload.bytesize }
+total_packet_size = windows.sum do |(window_idx, window)|
+  window.sum { |_ts, packet| packet.size }
 end
 
 puts "TOTAL UNENCRYPTED, UNCOMPRESSED SIZE (HTML): #{site_html.bytesize} bytes"
@@ -247,11 +247,10 @@ csv = CSV.new(File.open("initcwnd.csv", "w"))
 first_window_size_bytes = nil
 first_window_size = nil
 puts "\nDATA WINDOWS (NOT TLS):\n"
-windows.each_with_index do |(window_idx, blocks), index|
+windows.each_with_index do |(window_idx, packets), index|
   range = window_ranges[window_idx]
-  packets = blocks.map { |block| Packet.parse(block.data) }
 
-  window_size_bytes = packets.sum { |p| p.payload.bytesize }
+  window_size_bytes = packets.sum { |_ts, p| p.size }
   first_window_size_bytes ||= window_size_bytes
   first_window_size ||= packets.size
 
