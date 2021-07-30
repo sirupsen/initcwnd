@@ -7,11 +7,11 @@ begin
 rescue LoadError
 end
 
-uri = URI(ARGV[0].strip)
+uri = URI(ARGV[0])
 
 raise "Please provide a URI as the first argument, e.g. https://sirupsen.com" unless uri
 
-interface = ARGV[1].strip
+interface = ARGV[1]
 
 raise "Please provide the outgoing network interface, e.g. en0. You can usually obtain this easily by typing `ifconfig` or `ip`." unless interface
 
