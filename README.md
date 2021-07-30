@@ -1,8 +1,10 @@
 # initcwnd
 
 This simple, hacky Ruby script will attempt to guess the initial congestion
-window and subsequent window sizes. It accompanies Napkin Math post 15. It has
-to be run as root, as it uses `tcpdump(1)` to monitor the connection.
+window and subsequent window sizes. It accompanies [Napkin Math post 15][np]. It
+has to be run as root, as it uses `tcpdump(1)` to monitor the connection.
+
+[np]: https://sirupsen.com/napkin/problem-15/
 
 ```
 sudo gem install packetfu net-ping
