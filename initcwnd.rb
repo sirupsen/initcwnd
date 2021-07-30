@@ -50,7 +50,7 @@ sleep(2) # TCPdump needs a moment to start
 # The reason I didn't is because curl supports SSLKEYLOGFILE which is very
 # convenient for Wireshark.
 # TODO: We do not send --compressed
-site_html = `SSLKEYLOGFILE=key.log curl -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
+site_html = `SSLKEYLOGFILE=key.log curl --tlsv1.2 -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
 unless $?.success?
   puts "CURL failed. Maybe the URL is a redirect?"
   exit 1
