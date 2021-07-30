@@ -13,7 +13,7 @@ raise "Please provide a URI as the first argument, e.g. https://sirupsen.com" un
 
 interface = ARGV[1]
 
-raise "Please provide the outgoing network interface, e.g. en0. You can usually obtain this easily by typing `ifconfig` or `ip`." unless interface
+raise "Please provide the outgoing network interface, e.g. en0. You can usually obtain this easily by typing `ifconfig` or `ip addr`." unless interface
 
 ping_times = 20.times.map do
   before = Time.now

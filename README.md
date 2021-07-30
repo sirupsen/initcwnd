@@ -4,6 +4,9 @@ This simple, hacky Ruby script will attempt to guess the initial congestion
 window and subsequent window sizes. It accompanies [Napkin Math post 15][np]. It
 has to be run as root, as it uses `tcpdump(1)` to monitor the connection.
 
+**Note:** Tested to work on MacOS. Not fully compatible with Linux for some
+reason. Contributions encouraged!
+
 [np]: https://sirupsen.com/napkin/problem-15/
 
 ```
