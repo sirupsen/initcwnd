@@ -11,7 +11,7 @@ has to be run as root, as it uses `tcpdump(1)` to monitor the connection.
 # depending on your operating system.
 
 sudo gem install packetfu net-ping
-sudo ruby initcwnd.rb https://github.com/sirupsen/initcwnd
+sudo ruby initcwnd.rb https://github.com/sirupsen/initcwnd en0
 ```
 
 This script uses a lot of heuristics to make an educated guess at TCP windows.

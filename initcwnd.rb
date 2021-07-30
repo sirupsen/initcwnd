@@ -7,7 +7,13 @@ begin
 rescue LoadError
 end
 
-uri = URI(ARGV[0])
+uri = URI(ARGV[0].strip)
+
+raise "Please provide a URI as the first argument, e.g. https://sirupsen.com" unless uri
+
+interface = ARGV[1].strip
+
+raise "Please provide the outgoing network interface, e.g. en0. You can usually obtain this easily by typing `ifconfig` or `ip`." unless interface
 
 ping_times = 20.times.map do
   before = Time.now
@@ -41,7 +47,7 @@ puts "stddev: #{stddev * 1000}ms"
 File.delete("initcwnd.pcap") if File.exist?("initcwnd.pcap")
 
 pid = fork do
-  exec("tcpdump", "-i", "en0", "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
+  exec("tcpdump", "-i", interface, "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
 end
 
 sleep(2) # TCPdump needs a moment to start
