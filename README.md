@@ -20,6 +20,14 @@ write a custom TCP/IP implementation and an HTTP client on top of it to get a
 more definitive answer, but this was frankly more work than I was wiling to put
 in.
 
+**Note:** Presently, this script only works on MacOS. It uses the newer pcap
+format, `pcap-ng`, to extract some additional data. It seems that `tcpdump` on
+Linux doesn't [support _writing_ `pcap-ng`, only reading][pcap]. It's quite
+possible it could be made to to work with the old `pcap` format and not require
+this. The main obstacle is to extract the accurate timestamps for the packets.
+
+[pcap]: https://seclists.org/tcpdump/2014/q3/4
+
 ![](http://sirupsen.com/napkin/problem-15/initcwnd-script.png)
 
 ## How does it work?
