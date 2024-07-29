@@ -13,7 +13,7 @@ reason. Contributions encouraged!
 # You may need to install libpcap development packages for packetfu to work,
 # depending on your operating system.
 
-sudo gem install packetfu net-ping
+sudo bundle install
 sudo ruby initcwnd.rb https://github.com/sirupsen/initcwnd en0
 ```
 
