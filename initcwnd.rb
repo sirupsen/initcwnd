@@ -56,7 +56,8 @@ sleep(2) # TCPdump needs a moment to start
 # The reason I didn't is because curl supports SSLKEYLOGFILE which is very
 # convenient for Wireshark.
 # TODO: We do not send --compressed
-site_html = `SSLKEYLOGFILE=key.log curl --tlsv1.2 -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
+# TODO: Support TLS 1.3
+site_html = `SSLKEYLOGFILE=key.log curl --tlsv1.2 --tls-max 1.2 -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
 unless $?.success?
   puts "CURL failed. Maybe the URL is a redirect?"
   exit 1
@@ -119,6 +120,7 @@ packets = raw_packets.each do |packet_hash|
   diff_time = ((timestamp - previous_ts)*1000).round(0)
 
   output = "#{who}: [#{rel_time}ms/#{diff_time}ms] #{type} #{packet.size} bytes\x1b[0m: "
+  # For TLS 1.3 the sequence would be 16 03 01 02
   if packet.payload[0..3] == "\x16\x03\x01\x00"
     output << "TLS CLIENT, START HANDSHAKE"
     tls_start_ts = previous_ts # computation can take a bit. go from ack.
