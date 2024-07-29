@@ -47,7 +47,7 @@ puts "stddev: #{stddev * 1000}ms"
 File.delete("initcwnd.pcap") if File.exist?("initcwnd.pcap")
 
 pid = fork do
-  exec("tcpdump", "-i", interface, "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
+  exec("tcpdump", "-i", interface, "-w", "initcwnd.pcap", "--packet-buffered", "host", uri.host, "and", "port", "443")
 end
 
 sleep(2) # TCPdump needs a moment to start
@@ -62,6 +62,8 @@ unless $?.success?
   exit 1
 end
 
+# Flush the packets
+Process.kill("SIGUSR2", pid)
 sleep(1) # TCPdump needs a moment to capture
 
 Process.kill("SIGQUIT", pid)
@@ -215,6 +217,11 @@ packets = raw_packets.each do |packet_hash|
   puts
 
   previous_ts = timestamp
+end
+
+if not data_done_ts
+  puts "Could not find end timestamp!"
+  exit 1
 end
 
 def to_ms(seconds, round = 0)
