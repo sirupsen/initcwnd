@@ -2,12 +2,17 @@ GEM
   remote: https://rubygems.org/
   specs:
     net-ping (2.0.8)
+    packetfu (2.0.0)
+      pcaprub (~> 0.13.1)
+    pcaprub (0.13.2)
 
 PLATFORMS
   arm64-darwin-20
+  x86_64-linux
 
 DEPENDENCIES
   net-ping
+  packetfu
 
 BUNDLED WITH
    2.2.15

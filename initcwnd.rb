@@ -47,7 +47,7 @@ puts "stddev: #{stddev * 1000}ms"
 File.delete("initcwnd.pcap") if File.exist?("initcwnd.pcap")
 
 pid = fork do
-  exec("tcpdump", "-i", interface, "-w", "initcwnd.pcap", "host", uri.host, "and", "port", "443")
+  exec("tcpdump", "-i", interface, "-w", "initcwnd.pcap", "--packet-buffered", "host", uri.host, "and", "port", "443")
 end
 
 sleep(2) # TCPdump needs a moment to start
@@ -56,12 +56,15 @@ sleep(2) # TCPdump needs a moment to start
 # The reason I didn't is because curl supports SSLKEYLOGFILE which is very
 # convenient for Wireshark.
 # TODO: We do not send --compressed
-site_html = `SSLKEYLOGFILE=key.log curl --tlsv1.2 -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
+# TODO: Support TLS 1.3
+site_html = `SSLKEYLOGFILE=key.log curl --tlsv1.2 --tls-max 1.2 -k -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" --fail --http1.1 #{uri.to_s}`
 unless $?.success?
   puts "CURL failed. Maybe the URL is a redirect?"
   exit 1
 end
 
+# Flush the packets
+Process.kill("SIGUSR2", pid)
 sleep(1) # TCPdump needs a moment to capture
 
 Process.kill("SIGQUIT", pid)
@@ -117,6 +120,7 @@ packets = raw_packets.each do |packet_hash|
   diff_time = ((timestamp - previous_ts)*1000).round(0)
 
   output = "#{who}: [#{rel_time}ms/#{diff_time}ms] #{type} #{packet.size} bytes\x1b[0m: "
+  # For TLS 1.3 the sequence would be 16 03 01 02
   if packet.payload[0..3] == "\x16\x03\x01\x00"
     output << "TLS CLIENT, START HANDSHAKE"
     tls_start_ts = previous_ts # computation can take a bit. go from ack.
@@ -215,6 +219,11 @@ packets = raw_packets.each do |packet_hash|
   puts
 
   previous_ts = timestamp
+end
+
+if not data_done_ts
+  puts "Could not find end timestamp!"
+  exit 1
 end
 
 def to_ms(seconds, round = 0)
